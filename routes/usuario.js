@@ -19,7 +19,12 @@ var Usuario = require('../models/usuario');
 // Obtener todos los usuarios
 app.get('/', (req, res, next) => {
 
-    Usuario.find({}, 'nombre email role')
+    var desde = req.query.desde || 0;
+    desde = Number(desde)
+
+    Usuario.find({}, 'nombre email role img')
+        .skip(desde)
+        .limit(5)
         .exec(
             (err, usuarios) => {
                 if (err) {
@@ -30,15 +35,21 @@ app.get('/', (req, res, next) => {
                     });
                 }
 
-                res.status(200).json({
-                    ok: true,
-                    usuarios
-                });
+                Usuario.count({}, (err, conteo) => {
+
+                    res.status(200).json({
+                        ok: true,
+                        usuarios,
+                        total: conteo
+                    });
+                })
+
+
             }
         )
 })
 
-// crear nuevo suario
+// crear nuevo usuario
 app.post('/', mdAutenticacion.verificaToken, (req, res) => {
 
     var body = req.body;
@@ -93,7 +104,7 @@ app.put('/:id', mdAutenticacion.verificaToken, (req, res) => {
         if (!usuario) {
             return res.status(400).json({
                 ok: false,
-                mensaje: 'El usuario cone el id: ' + id + ' no existe',
+                mensaje: 'El usuario con el id: ' + id + ' no existe',
                 errors: { message: 'no existe un usuario con ese id' }
             });
         }
@@ -143,7 +154,7 @@ app.delete('/:id', mdAutenticacion.verificaToken, (req, res) => {
             res.status(500).json({
                 ok: false,
                 mensaje: 'no existe usuario con tal id',
-                errrors: { message: 'No existe usuario con tal id' }
+                errors: { message: 'No existe usuario con tal id' }
             });
         }
         res.status(200).json({
